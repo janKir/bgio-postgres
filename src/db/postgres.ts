@@ -1,7 +1,29 @@
 import { Async } from "boardgame.io/internal";
 import { LogEntry, Server, State, StorageAPI } from "boardgame.io";
+import { Sequelize } from "sequelize";
+import { Game, gameAttributes } from "./entities/game";
+import { Log, LogAttributes } from "./entities/log";
 
+export interface PostGresOptions {
+  database: string;
+  username: string;
+  password: string;
+  host: string;
+}
 export class PostgresStore extends Async {
+  private sequelize: Sequelize;
+
+  constructor({ database, username, password, host }: PostGresOptions) {
+    super();
+    this.sequelize = new Sequelize(database, username, password, {
+      host: host,
+      dialect: "postgres",
+    });
+
+    Game.init(gameAttributes, { sequelize: this.sequelize });
+    Log.init(LogAttributes, { sequelize: this.sequelize });
+  }
+
   /**
    * Connect.
    */
