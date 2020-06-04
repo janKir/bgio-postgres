@@ -1,6 +1,21 @@
 import { DataTypes, Model, ModelAttributes } from "sequelize/types";
+import { State, LogEntry } from "boardgame.io";
 
-export class Game extends Model {}
+export class Game extends Model {
+  public id!: string;
+  // metadata
+  public gameName!: string;
+  public players!: unknown;
+  public setupData!: unknown | undefined;
+  public gameover!: unknown | undefined;
+  public nextRoomID!: string | undefined;
+  public unlisted!: boolean | undefined;
+  // state
+  public state!: State | undefined;
+  public initialState!: State;
+  // log
+  public log!: LogEntry[];
+}
 
 export const gameAttributes: ModelAttributes = {
   id: {
@@ -9,17 +24,16 @@ export const gameAttributes: ModelAttributes = {
     primaryKey: true,
   },
   // metadata
-  name: {
+  gameName: {
     type: DataTypes.STRING,
   },
-  // TODO: maybe create player table
   players: {
     type: DataTypes.JSON,
   },
   setupData: {
     type: DataTypes.JSON,
   },
-  gameOver: {
+  gameover: {
     type: DataTypes.JSON,
   },
   nextRoomID: {
@@ -33,6 +47,10 @@ export const gameAttributes: ModelAttributes = {
     type: DataTypes.JSON,
   },
   initialState: {
+    type: DataTypes.JSON,
+  },
+  // Log
+  log: {
     type: DataTypes.JSON,
   },
 };

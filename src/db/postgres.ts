@@ -2,7 +2,6 @@ import { Async } from "boardgame.io/internal";
 import { LogEntry, Server, State, StorageAPI } from "boardgame.io";
 import { Sequelize } from "sequelize";
 import { Game, gameAttributes } from "./entities/game";
-import { Log, LogAttributes } from "./entities/log";
 
 export interface PostGresOptions {
   database: string;
@@ -21,15 +20,14 @@ export class PostgresStore extends Async {
     });
 
     Game.init(gameAttributes, { sequelize: this.sequelize });
-    Log.init(LogAttributes, { sequelize: this.sequelize });
   }
 
   /**
    * Connect.
    */
-  connect(): Promise<void> {
-    // TODO: implement
-    return Promise.reject();
+  async connect(): Promise<void> {
+    // sync sequelize models with database schema
+    await this.sequelize.sync();
   }
 
   /**
@@ -43,9 +41,31 @@ export class PostgresStore extends Async {
    * a game is created.  For example, it might stow away the
    * initial game state in a separate field for easier retrieval.
    */
-  createGame(gameID: string, opts: StorageAPI.CreateGameOpts): Promise<void> {
-    // TODO: implement
-    return Promise.reject();
+  async createGame(
+    id: string,
+    {
+      initialState,
+      metadata: {
+        gameName,
+        players,
+        setupData,
+        gameover,
+        nextRoomID,
+        unlisted,
+      },
+    }: StorageAPI.CreateGameOpts
+  ): Promise<void> {
+    await Game.create({
+      id,
+      gameName,
+      players,
+      setupData,
+      gameover,
+      nextRoomID,
+      unlisted,
+      initialState,
+      log: [],
+    });
   }
 
   /**
@@ -54,43 +74,111 @@ export class PostgresStore extends Async {
    * If passed a deltalog array, setState should append its contents to the
    * existing log for this game.
    */
-  setState(gameID: string, state: State, deltalog?: LogEntry[]): Promise<void> {
-    // TODO: implement
-    return Promise.reject();
+  async setState(
+    id: string,
+    state: State,
+    deltalog?: LogEntry[]
+  ): Promise<void> {
+    await this.sequelize.transaction(async (transaction) => {
+      // 1. get previous state
+      const game: Game = await Game.findByPk(id, { transaction });
+      const previousState = game.state;
+      // 2. check if given state is newer than previous, otherwise skip
+      if (!previousState || previousState._stateID < state._stateID) {
+        await Game.update(
+          {
+            // 3. set new state
+            state,
+            // 4. append deltalog to log if provided
+            log: [...game.log, ...(deltalog ?? [])],
+          },
+          { where: { id }, transaction }
+        );
+      }
+    });
   }
 
   /**
    * Update the game metadata.
    */
-  setMetadata(gameID: string, metadata: Server.GameMetadata): Promise<void> {
-    // TODO: implement
-    return Promise.reject();
+  async setMetadata(
+    id: string,
+    {
+      gameName,
+      players,
+      setupData,
+      gameover,
+      nextRoomID,
+      unlisted,
+    }: Server.GameMetadata
+  ): Promise<void> {
+    await Game.update(
+      {
+        gameName,
+        players,
+        setupData,
+        gameover,
+        nextRoomID,
+        unlisted,
+      },
+      { where: { id } }
+    );
   }
 
   /**
    * Fetch the game state.
    */
-  fetch<O extends StorageAPI.FetchOpts>(
+  async fetch<O extends StorageAPI.FetchOpts>(
     gameID: string,
-    opts: O
+    {
+      state: fetchState,
+      log: fetchLog,
+      metadata: fetchMetadata,
+      initialState: fetchInitialState,
+    }: O
   ): Promise<StorageAPI.FetchResult<O>> {
-    // TODO: implement
-    return Promise.reject();
+    const {
+      gameName,
+      players,
+      setupData,
+      gameover,
+      nextRoomID,
+      unlisted,
+      initialState,
+      state,
+      log,
+    }: Game = await Game.findByPk(gameID);
+    const metadata = {
+      gameName,
+      players,
+      setupData,
+      gameover,
+      nextRoomID,
+      unlisted,
+    };
+    return Object.assign(
+      {},
+      fetchMetadata ? { metadata } : null,
+      fetchInitialState ? { initialState } : null,
+      fetchState ? { state } : null,
+      fetchLog ? { log } : null
+    ) as StorageAPI.FetchFields;
   }
 
   /**
    * Remove the game state.
    */
-  wipe(gameID: string): Promise<void> {
-    // TODO: implement
-    return Promise.reject();
+  async wipe(id: string): Promise<void> {
+    await Game.destroy({ where: { id } });
   }
 
   /**
    * Return all games.
    */
-  listGames(opts?: StorageAPI.ListGamesOpts): Promise<string[]> {
-    // TODO: implement
-    return Promise.reject();
+  async listGames(opts?: StorageAPI.ListGamesOpts): Promise<string[]> {
+    const games: Game[] = await Game.findAll(
+      opts?.gameName ? { where: { gameName: opts.gameName } } : {}
+    );
+    return games.map((game) => game.id);
   }
 }
