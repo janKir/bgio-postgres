@@ -1,25 +1,22 @@
 import { Async } from "boardgame.io/internal";
 import { LogEntry, Server, State, StorageAPI } from "boardgame.io";
-import { Sequelize } from "sequelize";
+import { Sequelize, Options } from "sequelize";
 import { Game, gameAttributes } from "./entities/game";
 
-export interface PostGresOptions {
-  database: string;
-  username: string;
-  password: string;
-  host: string;
-}
 export class PostgresStore extends Async {
   private sequelize: Sequelize;
 
-  constructor({ database, username, password, host }: PostGresOptions) {
+  constructor(uriOrOptions: Options | string) {
     super();
-    this.sequelize = new Sequelize(database, username, password, {
-      host: host,
-      dialect: "postgres",
-    });
+    if (typeof uriOrOptions === "string") {
+      this.sequelize = new Sequelize(uriOrOptions);
+    } else {
+      this.sequelize = new Sequelize({ dialect: "postgres", ...uriOrOptions });
+    }
 
     Game.init(gameAttributes, { sequelize: this.sequelize });
+
+    this.sequelize.authenticate();
   }
 
   /**
