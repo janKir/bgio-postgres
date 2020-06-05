@@ -64,6 +64,7 @@ export class PostgresStore extends Async {
       nextRoomID,
       unlisted,
       initialState,
+      state: initialState,
       log: [],
     });
   }
@@ -81,18 +82,19 @@ export class PostgresStore extends Async {
   ): Promise<void> {
     await this.sequelize.transaction(async (transaction) => {
       // 1. get previous state
-      const game: Game = await Game.findByPk(id, { transaction });
-      const previousState = game.state;
+      const game: Game | undefined = await Game.findByPk(id, { transaction });
+      const previousState = game?.state;
       // 2. check if given state is newer than previous, otherwise skip
       if (!previousState || previousState._stateID < state._stateID) {
-        await Game.update(
+        await Game.upsert(
           {
+            id,
             // 3. set new state
             state,
             // 4. append deltalog to log if provided
-            log: [...game.log, ...(deltalog ?? [])],
+            log: [...(game?.log ?? []), ...(deltalog ?? [])],
           },
-          { where: { id }, transaction }
+          { transaction }
         );
       }
     });
@@ -112,17 +114,15 @@ export class PostgresStore extends Async {
       unlisted,
     }: Server.GameMetadata
   ): Promise<void> {
-    await Game.update(
-      {
-        gameName,
-        players,
-        setupData,
-        gameover,
-        nextRoomID,
-        unlisted,
-      },
-      { where: { id } }
-    );
+    await Game.upsert({
+      id,
+      gameName,
+      players,
+      setupData,
+      gameover,
+      nextRoomID,
+      unlisted,
+    });
   }
 
   /**
@@ -130,39 +130,32 @@ export class PostgresStore extends Async {
    */
   async fetch<O extends StorageAPI.FetchOpts>(
     gameID: string,
-    {
-      state: fetchState,
-      log: fetchLog,
-      metadata: fetchMetadata,
-      initialState: fetchInitialState,
-    }: O
+    { state, log, metadata, initialState }: O
   ): Promise<StorageAPI.FetchResult<O>> {
-    const {
-      gameName,
-      players,
-      setupData,
-      gameover,
-      nextRoomID,
-      unlisted,
-      initialState,
-      state,
-      log,
-    }: Game = await Game.findByPk(gameID);
-    const metadata = {
-      gameName,
-      players,
-      setupData,
-      gameover,
-      nextRoomID,
-      unlisted,
-    };
-    return Object.assign(
-      {},
-      fetchMetadata ? { metadata } : null,
-      fetchInitialState ? { initialState } : null,
-      fetchState ? { state } : null,
-      fetchLog ? { log } : null
-    ) as StorageAPI.FetchFields;
+    const game: Game = await Game.findByPk(gameID, { rejectOnEmpty: true });
+
+    const result = {} as StorageAPI.FetchFields;
+    if (metadata) {
+      result.metadata = {
+        gameName: game.gameName,
+        players: game.players,
+        setupData: game.setupData,
+        gameover: game.gameover,
+        nextRoomID: game.nextRoomID,
+        unlisted: game.unlisted,
+      };
+    }
+    if (initialState) {
+      result.initialState = game.initialState;
+    }
+    if (state) {
+      result.state = game.state!;
+    }
+    if (log) {
+      result.log = game.log;
+    }
+
+    return result as StorageAPI.FetchResult<O>;
   }
 
   /**
