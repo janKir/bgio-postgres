@@ -169,9 +169,10 @@ export class PostgresStore extends Async {
    * Return all games.
    */
   async listGames(opts?: StorageAPI.ListGamesOpts): Promise<string[]> {
-    const games: Game[] = await Game.findAll(
-      opts?.gameName ? { where: { gameName: opts.gameName } } : {}
-    );
+    const games: Game[] = await Game.findAll({
+      attributes: ["id"],
+      where: opts?.gameName ? { gameName: opts.gameName } : undefined,
+    });
     return games.map((game) => game.id);
   }
 }
