@@ -1,6 +1,6 @@
 {
   "name": "bgio-postgres",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Postgres storage adapter for boardgame.io library",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
