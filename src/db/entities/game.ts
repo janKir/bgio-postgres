@@ -1,4 +1,4 @@
-import { DataTypes, Model, ModelAttributes } from "sequelize/types";
+import { DataTypes, Model, ModelAttributes } from "sequelize";
 import { State, LogEntry } from "boardgame.io";
 
 export class Game extends Model {
