@@ -1,20 +1,24 @@
 import { DataTypes, Model, ModelAttributes } from "sequelize";
-import { State, LogEntry } from "boardgame.io";
+import { State, LogEntry, Server } from "boardgame.io";
 
 export class Game extends Model {
   public id!: string;
   // metadata
   public gameName!: string;
-  public players!: unknown;
+  public players!: { [id: number]: Server.PlayerMetadata };
   public setupData!: unknown | undefined;
   public gameover!: unknown | undefined;
   public nextRoomID!: string | undefined;
   public unlisted!: boolean | undefined;
   // state
-  public state!: State | undefined;
+  public state!: State;
   public initialState!: State;
   // log
   public log!: LogEntry[];
+
+  // timestamps!
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
 }
 
 export const gameAttributes: ModelAttributes = {
