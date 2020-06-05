@@ -2,6 +2,16 @@
   "name": "bgio-postgres",
   "version": "1.0.1",
   "description": "Postgres storage adapter for boardgame.io library",
+  "homepage": "https://github.com/janKir/bgio-postgres#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/janKir/bgio-postgres.git"
+  },
+  "keywords": [
+    "boardgame.io",
+    "postgres",
+    "postgresql"
+  ],
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
