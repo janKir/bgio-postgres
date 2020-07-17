@@ -129,9 +129,13 @@ export class PostgresStore extends Async {
     gameID: string,
     { state, log, metadata, initialState }: O
   ): Promise<StorageAPI.FetchResult<O>> {
-    const game: Game = await Game.findByPk(gameID, { rejectOnEmpty: true });
-
     const result = {} as StorageAPI.FetchFields;
+    const game: Game = await Game.findByPk(gameID);
+
+    if (!game) {
+      return result;
+    }
+
     if (metadata) {
       result.metadata = {
         gameName: game.gameName,
