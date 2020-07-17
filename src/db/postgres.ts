@@ -1,6 +1,6 @@
 import { Async } from "boardgame.io/internal";
 import { LogEntry, Server, State, StorageAPI } from "boardgame.io";
-import { Sequelize, Options } from "sequelize";
+import { Sequelize, Options, Op } from "sequelize";
 import { Game, gameAttributes } from "./entities/game";
 
 export class PostgresStore extends Async {
@@ -109,7 +109,9 @@ export class PostgresStore extends Async {
       gameover,
       nextRoomID,
       unlisted,
-    }: Server.GameMetadata
+      createdAt,
+      updatedAt,
+    }: Server.GameMetadata & { createdAt: number; updatedAt: number } // TODO: remove extra types when boardgame.io 0.40.0 is available
   ): Promise<void> {
     await Game.upsert({
       id,
@@ -119,6 +121,8 @@ export class PostgresStore extends Async {
       gameover,
       nextRoomID,
       unlisted,
+      createdAt: new Date(createdAt),
+      updatedAt: new Date(updatedAt),
     });
   }
 
@@ -129,7 +133,10 @@ export class PostgresStore extends Async {
     gameID: string,
     { state, log, metadata, initialState }: O
   ): Promise<StorageAPI.FetchResult<O>> {
-    const result = {} as StorageAPI.FetchFields;
+    const result = {} as StorageAPI.FetchFields & {
+      // TODO: remove extra types when boardgame.io 0.40.0 is available
+      metadata: { createdAt: number; updatedAt: number };
+    };
     const game: Game = await Game.findByPk(gameID);
 
     if (!game) {
@@ -144,6 +151,8 @@ export class PostgresStore extends Async {
         gameover: game.gameover,
         nextRoomID: game.nextRoomID,
         unlisted: game.unlisted,
+        createdAt: game.createdAt.getTime(),
+        updatedAt: game.updatedAt.getTime(),
       };
     }
     if (initialState) {
@@ -169,11 +178,36 @@ export class PostgresStore extends Async {
   /**
    * Return all games.
    */
-  async listGames(opts?: StorageAPI.ListGamesOpts): Promise<string[]> {
+  async listGames(
+    opts?: StorageAPI.ListGamesOpts & ListGamesFilterOpts
+  ): Promise<string[]> {
+    const where = {
+      [Op.and]: [
+        opts?.gameName && { gameName: opts.gameName },
+        opts?.where?.isGameover === true && { gameover: { [Op.ne]: null } },
+        opts?.where?.isGameover === false && { gameover: { [Op.is]: null } },
+        opts?.where?.updatedBefore !== undefined && {
+          updatedAt: { [Op.lt]: opts.where.updatedBefore },
+        },
+        opts?.where?.updatedAfter !== undefined && {
+          updatedAt: { [Op.gt]: opts.where.updatedAfter },
+        },
+      ],
+    };
+
     const games: Game[] = await Game.findAll({
       attributes: ["id"],
-      where: opts?.gameName ? { gameName: opts.gameName } : undefined,
+      where,
     });
     return games.map((game) => game.id);
   }
+}
+
+// TODO: remove helper types when boardgame.io is integrated
+interface ListGamesFilterOpts {
+  where?: {
+    isGameover?: boolean;
+    updatedBefore?: number;
+    updatedAfter?: number;
+  };
 }
