@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.6] - 2020-07-18
+
+- fix setMetadata error when createdAt / updatedAt args are not specified
+
 ## [1.0.5] - 2020-07-17
 
 - provide ability to filter match list (feature coming with boardgame.io 0.40.x)
