@@ -121,8 +121,8 @@ export class PostgresStore extends Async {
       gameover,
       nextRoomID,
       unlisted,
-      createdAt: new Date(createdAt),
-      updatedAt: new Date(updatedAt),
+      createdAt: createdAt ? new Date(createdAt) : undefined,
+      updatedAt: updatedAt ? new Date(updatedAt) : undefined,
     });
   }
 
