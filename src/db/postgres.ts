@@ -146,7 +146,7 @@ export class PostgresStore extends Async {
     if (metadata) {
       result.metadata = {
         gameName: game.gameName,
-        players: game.players,
+        players: game.players || [],
         setupData: game.setupData,
         gameover: game.gameover,
         nextRoomID: game.nextRoomID,
