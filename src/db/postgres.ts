@@ -11,7 +11,7 @@ export class PostgresStore extends Async {
   constructor(uriOrOptions: Options | string, extraOptions?: Options) {
     super();
     if (typeof uriOrOptions === "string") {
-      this.sequelize = new Sequelize(uriOrOptions, extraOptions);
+      this.sequelize = new Sequelize(uriOrOptions, extraOptions || {});
     } else {
       this.sequelize = new Sequelize({ dialect: "postgres", ...uriOrOptions });
     }
