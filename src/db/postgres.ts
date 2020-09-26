@@ -6,6 +6,8 @@ import { Game, gameAttributes } from "./entities/game";
 export class PostgresStore extends Async {
   private sequelize: Sequelize;
 
+  constructor(uri: string, options?: Options);
+  constructor(options: Options);
   constructor(uriOrOptions: Options | string, extraOptions?: Options) {
     super();
     if (typeof uriOrOptions === "string") {
