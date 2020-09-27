@@ -6,10 +6,12 @@ import { Game, gameAttributes } from "./entities/game";
 export class PostgresStore extends Async {
   private sequelize: Sequelize;
 
-  constructor(uriOrOptions: Options | string) {
+  constructor(uri: string, options?: Options);
+  constructor(options: Options);
+  constructor(uriOrOptions: Options | string, extraOptions?: Options) {
     super();
     if (typeof uriOrOptions === "string") {
-      this.sequelize = new Sequelize(uriOrOptions);
+      this.sequelize = new Sequelize(uriOrOptions, extraOptions || {});
     } else {
       this.sequelize = new Sequelize({ dialect: "postgres", ...uriOrOptions });
     }
