@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.8] - 2020-09-27
+
+- allow extra options when using URI
+
 ## [1.0.7] - 2020-08-10
 
 -  Make players an empty array rather than null or undefined
