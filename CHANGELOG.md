@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.9] - 2020-11-24
+
+- fix support for boardgame.io >=0.40
+
 ## [1.0.8] - 2020-09-27
 
 - allow extra options when using URI
