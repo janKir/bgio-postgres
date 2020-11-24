@@ -49,10 +49,10 @@ export class PostgresStore extends Async {
         players,
         setupData,
         gameover,
-        nextRoomID,
+        nextMatchID,
         unlisted,
       },
-    }: StorageAPI.CreateGameOpts
+    }: StorageAPI.CreateMatchOpts
   ): Promise<void> {
     await Game.create({
       id,
@@ -60,7 +60,7 @@ export class PostgresStore extends Async {
       players,
       setupData,
       gameover,
-      nextRoomID,
+      nextMatchID,
       unlisted,
       initialState,
       state: initialState,
@@ -109,11 +109,11 @@ export class PostgresStore extends Async {
       players,
       setupData,
       gameover,
-      nextRoomID,
+      nextMatchID,
       unlisted,
       createdAt,
       updatedAt,
-    }: Server.GameMetadata & { createdAt: number; updatedAt: number } // TODO: remove extra types when boardgame.io 0.40.0 is available
+    }: Server.MatchData
   ): Promise<void> {
     await Game.upsert({
       id,
@@ -121,7 +121,7 @@ export class PostgresStore extends Async {
       players,
       setupData,
       gameover,
-      nextRoomID,
+      nextMatchID,
       unlisted,
       createdAt: createdAt ? new Date(createdAt) : undefined,
       updatedAt: updatedAt ? new Date(updatedAt) : undefined,
@@ -135,10 +135,7 @@ export class PostgresStore extends Async {
     gameID: string,
     { state, log, metadata, initialState }: O
   ): Promise<StorageAPI.FetchResult<O>> {
-    const result = {} as StorageAPI.FetchFields & {
-      // TODO: remove extra types when boardgame.io 0.40.0 is available
-      metadata: { createdAt: number; updatedAt: number };
-    };
+    const result = {} as StorageAPI.FetchFields;
     const game: Game = await Game.findByPk(gameID);
 
     if (!game) {
@@ -151,7 +148,7 @@ export class PostgresStore extends Async {
         players: game.players || [],
         setupData: game.setupData,
         gameover: game.gameover,
-        nextRoomID: game.nextRoomID,
+        nextMatchID: game.nextRoomID,
         unlisted: game.unlisted,
         createdAt: game.createdAt.getTime(),
         updatedAt: game.updatedAt.getTime(),
@@ -180,9 +177,7 @@ export class PostgresStore extends Async {
   /**
    * Return all games.
    */
-  async listGames(
-    opts?: StorageAPI.ListGamesOpts & ListGamesFilterOpts
-  ): Promise<string[]> {
+  async listGames(opts?: StorageAPI.ListMatchesOpts): Promise<string[]> {
     const where = {
       [Op.and]: [
         opts?.gameName && { gameName: opts.gameName },
@@ -203,13 +198,4 @@ export class PostgresStore extends Async {
     });
     return games.map((game) => game.id);
   }
-}
-
-// TODO: remove helper types when boardgame.io is integrated
-interface ListGamesFilterOpts {
-  where?: {
-    isGameover?: boolean;
-    updatedBefore?: number;
-    updatedAfter?: number;
-  };
 }
