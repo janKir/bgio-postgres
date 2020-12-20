@@ -1,24 +1,31 @@
-import { Async } from "boardgame.io/internal";
 import { LogEntry, Server, State, StorageAPI } from "boardgame.io";
+import { Async } from "boardgame.io/internal";
 import { Sequelize, Options, Op } from "sequelize";
-import { Game, gameAttributes } from "./entities/game";
+import { Match, matchAttributes } from "./entities/match";
 
 export class PostgresStore extends Async {
-  private sequelize: Sequelize;
+  private _sequelize: Sequelize;
 
   constructor(uri: string, options?: Options);
   constructor(options: Options);
   constructor(uriOrOptions: Options | string, extraOptions?: Options) {
     super();
     if (typeof uriOrOptions === "string") {
-      this.sequelize = new Sequelize(uriOrOptions, extraOptions || {});
+      this._sequelize = new Sequelize(uriOrOptions, extraOptions || {});
     } else {
-      this.sequelize = new Sequelize({ dialect: "postgres", ...uriOrOptions });
+      this._sequelize = new Sequelize({ dialect: "postgres", ...uriOrOptions });
     }
 
-    Game.init(gameAttributes, { sequelize: this.sequelize });
+    Match.init(matchAttributes, {
+      sequelize: this._sequelize,
+      tableName: "Games",
+    });
 
-    this.sequelize.authenticate();
+    this._sequelize.authenticate();
+  }
+
+  get sequelize(): Sequelize {
+    return this._sequelize;
   }
 
   /**
@@ -26,21 +33,21 @@ export class PostgresStore extends Async {
    */
   async connect(): Promise<void> {
     // sync sequelize models with database schema
-    await this.sequelize.sync();
+    await this._sequelize.sync();
   }
 
   /**
-   * Create a new game.
+   * Create a new match.
    *
    * This might just need to call setState and setMetadata in
    * most implementations.
    *
    * However, it exists as a separate call so that the
    * implementation can provision things differently when
-   * a game is created.  For example, it might stow away the
-   * initial game state in a separate field for easier retrieval.
+   * a match is created.  For example, it might stow away the
+   * initial match state in a separate field for easier retrieval.
    */
-  async createGame(
+  async createMatch(
     id: string,
     {
       initialState,
@@ -54,7 +61,7 @@ export class PostgresStore extends Async {
       },
     }: StorageAPI.CreateMatchOpts
   ): Promise<void> {
-    await Game.create({
+    await Match.create({
       id,
       gameName,
       players,
@@ -69,6 +76,23 @@ export class PostgresStore extends Async {
   }
 
   /**
+   * Create a new game.
+   *
+   * This might just need to call setState and setMetadata in
+   * most implementations.
+   *
+   * However, it exists as a separate call so that the
+   * implementation can provision things differently when
+   * a game is created.  For example, it might stow away the
+   * initial game state in a separate field for easier retrieval.
+   *
+   * @deprecated Use createMatch instead, if implemented
+   */
+  createGame(matchID: string, opts: StorageAPI.CreateGameOpts): Promise<void> {
+    return this.createMatch(matchID, opts);
+  }
+
+  /**
    * Update the game state.
    *
    * If passed a deltalog array, setState should append its contents to the
@@ -79,19 +103,21 @@ export class PostgresStore extends Async {
     state: State,
     deltalog?: LogEntry[]
   ): Promise<void> {
-    await this.sequelize.transaction(async (transaction) => {
+    await this._sequelize.transaction(async (transaction) => {
       // 1. get previous state
-      const game: Game | undefined = await Game.findByPk(id, { transaction });
-      const previousState = game?.state;
+      const match: Match | null = await Match.findByPk(id, {
+        transaction,
+      });
+      const previousState = match?.state;
       // 2. check if given state is newer than previous, otherwise skip
       if (!previousState || previousState._stateID < state._stateID) {
-        await Game.upsert(
+        await Match.upsert(
           {
             id,
             // 3. set new state
             state,
             // 4. append deltalog to log if provided
-            log: [...(game?.log ?? []), ...(deltalog ?? [])],
+            log: [...(match?.log ?? []), ...(deltalog ?? [])],
           },
           { transaction }
         );
@@ -115,7 +141,7 @@ export class PostgresStore extends Async {
       updatedAt,
     }: Server.MatchData
   ): Promise<void> {
-    await Game.upsert({
+    await Match.upsert({
       id,
       gameName,
       players,
@@ -132,36 +158,36 @@ export class PostgresStore extends Async {
    * Fetch the game state.
    */
   async fetch<O extends StorageAPI.FetchOpts>(
-    gameID: string,
+    matchID: string,
     { state, log, metadata, initialState }: O
   ): Promise<StorageAPI.FetchResult<O>> {
     const result = {} as StorageAPI.FetchFields;
-    const game: Game = await Game.findByPk(gameID);
+    const match: Match | null = await Match.findByPk(matchID);
 
-    if (!game) {
+    if (!match) {
       return result;
     }
 
     if (metadata) {
       result.metadata = {
-        gameName: game.gameName,
-        players: game.players || [],
-        setupData: game.setupData,
-        gameover: game.gameover,
-        nextMatchID: game.nextRoomID,
-        unlisted: game.unlisted,
-        createdAt: game.createdAt.getTime(),
-        updatedAt: game.updatedAt.getTime(),
+        gameName: match.gameName,
+        players: match.players || [],
+        setupData: match.setupData,
+        gameover: match.gameover,
+        nextMatchID: match.nextRoomID,
+        unlisted: match.unlisted,
+        createdAt: match.createdAt.getTime(),
+        updatedAt: match.updatedAt.getTime(),
       };
     }
     if (initialState) {
-      result.initialState = game.initialState;
+      result.initialState = match.initialState;
     }
     if (state) {
-      result.state = game.state!;
+      result.state = match.state!;
     }
     if (log) {
-      result.log = game.log;
+      result.log = match.log;
     }
 
     return result as StorageAPI.FetchResult<O>;
@@ -171,13 +197,13 @@ export class PostgresStore extends Async {
    * Remove the game state.
    */
   async wipe(id: string): Promise<void> {
-    await Game.destroy({ where: { id } });
+    await Match.destroy({ where: { id } });
   }
 
   /**
-   * Return all games.
+   * Return all matches.
    */
-  async listGames(opts?: StorageAPI.ListMatchesOpts): Promise<string[]> {
+  async listMatches(opts?: StorageAPI.ListMatchesOpts): Promise<string[]> {
     const where = {
       [Op.and]: [
         opts?.gameName && { gameName: opts.gameName },
@@ -192,10 +218,19 @@ export class PostgresStore extends Async {
       ],
     };
 
-    const games: Game[] = await Game.findAll({
+    const matches: Match[] = await Match.findAll({
       attributes: ["id"],
       where,
     });
-    return games.map((game) => game.id);
+    return matches.map((match) => match.id);
+  }
+
+  /**
+   * Return all games.
+   *
+   * @deprecated Use listMatches instead, if implemented
+   */
+  listGames(opts?: StorageAPI.ListGamesOpts): Promise<string[]> {
+    return this.listMatches(opts);
   }
 }
