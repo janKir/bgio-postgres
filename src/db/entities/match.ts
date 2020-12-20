@@ -1,7 +1,7 @@
 import { DataTypes, Model, ModelAttributes } from "sequelize";
 import { State, LogEntry, Server } from "boardgame.io";
 
-export class Game extends Model {
+export class Match extends Model {
   public id!: string;
   // metadata
   public gameName!: string;
@@ -21,7 +21,7 @@ export class Game extends Model {
   public readonly updatedAt!: Date;
 }
 
-export const gameAttributes: ModelAttributes = {
+export const matchAttributes: ModelAttributes = {
   id: {
     type: DataTypes.STRING,
     unique: true,
