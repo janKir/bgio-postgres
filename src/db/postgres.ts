@@ -1,5 +1,5 @@
-import { Async } from "boardgame.io/internal";
 import { LogEntry, Server, State, StorageAPI } from "boardgame.io";
+import { Async } from "boardgame.io/internal";
 import { Sequelize, Options, Op } from "sequelize";
 import { Match, matchAttributes } from "./entities/match";
 
@@ -16,7 +16,10 @@ export class PostgresStore extends Async {
       this._sequelize = new Sequelize({ dialect: "postgres", ...uriOrOptions });
     }
 
-    Match.init(matchAttributes, { sequelize: this._sequelize });
+    Match.init(matchAttributes, {
+      sequelize: this._sequelize,
+      tableName: "Games",
+    });
 
     this._sequelize.authenticate();
   }
