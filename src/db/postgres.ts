@@ -102,7 +102,7 @@ export class PostgresStore extends Async {
   ): Promise<void> {
     await this._sequelize.transaction(async (transaction) => {
       // 1. get previous state
-      const match: Match | undefined = await Match.findByPk(id, {
+      const match: Match | null = await Match.findByPk(id, {
         transaction,
       });
       const previousState = match?.state;
@@ -159,7 +159,7 @@ export class PostgresStore extends Async {
     { state, log, metadata, initialState }: O
   ): Promise<StorageAPI.FetchResult<O>> {
     const result = {} as StorageAPI.FetchFields;
-    const match: Match = await Match.findByPk(matchID);
+    const match: Match | null = await Match.findByPk(matchID);
 
     if (!match) {
       return result;
