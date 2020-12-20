@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.10] - 2020-12-20
+
+- use latest boardgame.io and sequelize versions
+- consistent naming: "game" -> "match"
+- provide public getter for sequelize instance
+
 ## [1.0.9] - 2020-11-24
 
 - fix support for boardgame.io >=0.40
