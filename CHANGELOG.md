@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.11] - 2020-12-21
+
+- re-export sequelize package
+
 ## [1.0.10] - 2020-12-20
 
 - use latest boardgame.io and sequelize versions
