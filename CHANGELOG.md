@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.12] - 2020-12-21
+
+- fix package.json main entry
+
 ## [1.0.11] - 2020-12-21
 
 - re-export sequelize package
