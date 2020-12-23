@@ -17,6 +17,7 @@
   "scripts": {
     "build": "tsc",
     "prepare": "npm run build",
+    "lint": "eslint \"src/**/*.{js,ts}\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "files": [
