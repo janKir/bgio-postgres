@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.13] - 2020-12-23
+
+- restructure dist files for simpler imports
+- lower boardgame.io peer dependency to >=0.40.0
+
 ## [1.0.12] - 2020-12-21
 
 - fix package.json main entry
