@@ -62,7 +62,9 @@ Because Sequelize is used by the adapter under the hood, which can also be used 
 - this adapter utilizes JSON data types to persist storage, which is not supported by all database models. At the time of writing this, [Sequelize recognizes the JSON datatype for MySQL, Postgres and SQLite](https://sequelize.org/api/v6/class/src/data-types.js~jsontype)
 - This library was not made with other database models in mind. While there have been reports of it working with MySQL, any reported issues with models other than Postgres will not be addressed. That being said, there doesn't seem to be a reason it should work any differently.
 
-In order to use this with another database, either provide credentials using a URI as the first argument:
+In order to use this adapter with another database, first install a node client for that database as a dependency (for example, `npm install mysql2` for mysql).
+
+Second, either provide credentials using a URI as the first argument:
 
 ```typescript
 const db = new PostgresStore("mysql://<username>:<password>@<host>/<database>");
