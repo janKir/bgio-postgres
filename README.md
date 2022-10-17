@@ -56,3 +56,29 @@ The full list of available options is documented in the [Sequelize API Docs][cla
 
 [sequelize]: https://sequelize.org/master/
 [class-sequelize]: https://sequelize.readthedocs.io/en/latest/api/sequelize/#class-sequelize
+
+## Using with MySQL or other databases
+Because Sequelize is used by the adapter under the hood, which can also be used by other database models, it is in theory possible for this adapter to be used to connect to any of the supported sequelize databases. _HOWEVER_, there are a few important caveats:
+- this adapter utilizes JSON data types to persist storage, which is not supported by all database models. At the time of writing this, [Sequelize recognizes the JSON datatype for MySQL, Postgres and SQLite](https://sequelize.org/api/v6/class/src/data-types.js~jsontype)
+- This library was not made with other database models in mind. While there have been reports of it working with MySQL, any reported issues with models other than Postgres will not be addressed. That being said, there doesn't seem to be a reason it should work any differently.
+
+In order to use this adapter with another database, first install a node client for that database as a dependency (for example, `npm install mysql2` for mysql).
+
+Second, either provide credentials using a URI as the first argument:
+
+```typescript
+const db = new PostgresStore("mysql://<username>:<password>@<host>/<database>");
+```
+
+or by using an options object. In this case, the option `dialect: "<database_model>"` **_must be included_**.
+
+```typescript
+const db = new PostgresStore({
+  database: "database",
+  username: "username",
+  password: "password",
+  host: "host",
+  dialect: "mysql",
+});
+```
+
