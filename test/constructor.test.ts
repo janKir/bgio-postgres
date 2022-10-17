@@ -26,4 +26,21 @@ describe("instantiate new PostgresStore", () => {
     await db.connect();
     await db.sequelize.close();
   });
+
+  it("should create a new instance but throw on connect() if credentials are wrong", async () => {
+    const db = new PostgresStore({
+      database: "unknown",
+      username: "nobody",
+      password: "wrong",
+      host: "notfound",
+      port: 1234,
+    });
+
+    expect(db).toBeDefined();
+
+    expect(async () => {
+      await db.connect();
+      await db.sequelize.close();
+    }).rejects.toBeDefined();
+  });
 });

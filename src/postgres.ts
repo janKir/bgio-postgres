@@ -20,8 +20,6 @@ export class PostgresStore extends Async {
       sequelize: this._sequelize,
       tableName: "Games",
     });
-
-    this._sequelize.authenticate();
   }
 
   get sequelize(): Sequelize {
