@@ -3,9 +3,13 @@ import { TestPostgresStore } from "./test-postgres-store";
 describe("connect to PostgreSQL database", () => {
   let testStore: TestPostgresStore;
 
-  beforeAll(() => {
+  beforeAll(async () => {
     testStore = TestPostgresStore.create();
-    testStore.setup();
+    await testStore.beforeAll();
+  });
+
+  beforeEach(async () => {
+    await testStore.beforeEach();
   });
 
   afterAll(async () => {

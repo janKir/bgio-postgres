@@ -24,11 +24,15 @@ export class TestPostgresStore {
     return this.postgresStore.sequelize;
   }
 
-  async setup(): Promise<void> {
-    await this.db.connect();
+  async beforeAll(): Promise<void> {
+    await this.postgresStore.connect();
   }
 
-  async teardown(): Promise<void> {
+  async beforeEach(): Promise<void> {
+    await this.postgresStore.sequelize.query('DELETE FROM "Games"');
+  }
+
+  async afterAll(): Promise<void> {
     await this.postgresStore.sequelize.close();
   }
 }
