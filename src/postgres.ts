@@ -65,7 +65,7 @@ export class PostgresStore extends Async {
       players,
       setupData,
       gameover,
-      nextMatchID,
+      nextRoomID: nextMatchID,
       unlisted,
       initialState,
       state: initialState,
