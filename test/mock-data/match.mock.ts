@@ -1,5 +1,6 @@
 import { createMock } from "@golevelup/ts-jest";
 import { Match } from "../../src/entities/match";
+import { logEntry } from "./log-entry.mock";
 import { state } from "./state.mock";
 
 export const match = createMock<Match>({
@@ -16,5 +17,5 @@ export const match = createMock<Match>({
   gameover: "gameover",
   nextRoomID: "nextMatchId",
   unlisted: false,
-  log: [],
+  log: [logEntry],
 });

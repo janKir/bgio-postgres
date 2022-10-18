@@ -41,6 +41,7 @@ describe("create new match", () => {
     const result = results[0];
     expect(result).toEqual({
       ...match,
+      log: [],
       createdAt: expect.any(Date),
       updatedAt: expect.any(Date),
     });
