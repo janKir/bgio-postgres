@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.14] - 2022-10-19
+
+- add tests and CI
+- fix security issues
+- update README
+
 ## [1.0.13] - 2020-12-23
 
 - restructure dist files for simpler imports
