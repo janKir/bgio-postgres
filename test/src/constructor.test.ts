@@ -1,4 +1,4 @@
-import { PostgresStore } from "../src/postgres";
+import { PostgresStore } from "../../src/postgres";
 
 describe("instantiate new PostgresStore", () => {
   it("should create a new instance using a URI", async () => {

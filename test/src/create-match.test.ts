@@ -1,5 +1,5 @@
-import { Match } from "../src/entities/match";
-import { TestPostgresStore } from "./test-postgres-store";
+import { Match } from "../../src/entities/match";
+import { TestPostgresStore } from "../test-postgres-store";
 
 describe("create new match", () => {
   let testStore: TestPostgresStore;

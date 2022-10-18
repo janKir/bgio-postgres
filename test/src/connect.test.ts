@@ -1,4 +1,4 @@
-import { TestPostgresStore } from "./test-postgres-store";
+import { TestPostgresStore } from "../test-postgres-store";
 
 describe("connect to PostgreSQL database", () => {
   let testStore: TestPostgresStore;
