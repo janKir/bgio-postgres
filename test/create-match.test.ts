@@ -14,7 +14,7 @@ describe("create new match", () => {
   });
 
   afterAll(async () => {
-    await testStore.sequelize.close();
+    await testStore.afterAll();
   });
 
   it("should create a new database entry", async () => {
