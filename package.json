@@ -19,6 +19,7 @@
     "prepare": "npm run build",
     "lint": "eslint \"src/**/*.{js,ts}\"",
     "test": "jest --runInBand --config ./test/jest.config.js",
+    "test:cov": "npm test -- --coverage",
     "test:db": "npm test",
     "pretest:db": "docker-compose -f test/docker-compose.yml up -d",
     "posttest:db": "docker-compose -f test/docker-compose.yml down"
