@@ -145,7 +145,7 @@ export class PostgresStore extends Async {
       players,
       setupData,
       gameover,
-      nextMatchID,
+      nextRoomID: nextMatchID,
       unlisted,
       createdAt: createdAt ? new Date(createdAt) : undefined,
       updatedAt: updatedAt ? new Date(updatedAt) : undefined,
