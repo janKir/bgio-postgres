@@ -1,4 +1,4 @@
-import { Match } from "../../src/entities/match";
+import { match } from "../mock-data/match.mock";
 import { TestPostgresStore } from "../test-postgres-store";
 
 describe("create new match", () => {
@@ -18,38 +18,6 @@ describe("create new match", () => {
   });
 
   it("should create a new database entry", async () => {
-    const match: Partial<Match> = {
-      id: "test-id",
-      initialState: {
-        ctx: {
-          numPlayers: 3,
-          playOrder: ["101", "102", "103"],
-          playOrderPos: 0,
-          activePlayers: null,
-          currentPlayer: "101",
-          turn: 0,
-          phase: "setup",
-        },
-        G: 2,
-        plugins: {},
-        _undo: [],
-        _redo: [],
-        _stateID: 0,
-      },
-      gameName: "test-gamename",
-      players: {
-        101: { id: 101 },
-        102: { id: 102 },
-        103: { id: 103 },
-      },
-      setupData: 2,
-      gameover: "gameover",
-      nextRoomID: "nextMatchId",
-      unlisted: false,
-      createdAt: expect.any(Date),
-      updatedAt: expect.any(Date),
-      log: [],
-    };
     await testStore.db.createMatch(match.id!, {
       initialState: match.initialState!,
       metadata: {
@@ -71,6 +39,10 @@ describe("create new match", () => {
     expect(results).toHaveLength(1);
 
     const result = results[0];
-    expect(result).toEqual(match);
+    expect(result).toEqual({
+      ...match,
+      createdAt: expect.any(Date),
+      updatedAt: expect.any(Date),
+    });
   });
 });
