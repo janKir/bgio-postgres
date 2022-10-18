@@ -20,8 +20,6 @@ export class PostgresStore extends Async {
       sequelize: this._sequelize,
       tableName: "Games",
     });
-
-    this._sequelize.authenticate();
   }
 
   get sequelize(): Sequelize {
@@ -67,7 +65,7 @@ export class PostgresStore extends Async {
       players,
       setupData,
       gameover,
-      nextMatchID,
+      nextRoomID: nextMatchID,
       unlisted,
       initialState,
       state: initialState,
@@ -147,7 +145,7 @@ export class PostgresStore extends Async {
       players,
       setupData,
       gameover,
-      nextMatchID,
+      nextRoomID: nextMatchID,
       unlisted,
       createdAt: createdAt ? new Date(createdAt) : undefined,
       updatedAt: updatedAt ? new Date(updatedAt) : undefined,
