@@ -70,6 +70,22 @@ describe("listMatches", () => {
     jest.useRealTimers();
   });
 
+  it("should have correct timestamps from fake timers", async () => {
+    const [results] = await testStore.sequelize.query(
+      `SELECT id, "updatedAt" FROM "Games" ORDER BY id`
+    );
+    // test-id-1 and test-id-4 were created at 1666000000000
+    // test-id-2 and test-id-5 were created at 1667000000000
+    // test-id-3 and test-id-6 were created at 1668000000000
+    const byId: Record<string, number> = {};
+    (results as any[]).forEach((r) => {
+      byId[r.id] = new Date(r.updatedAt).getTime();
+    });
+    expect(byId["test-id-1"]).toBe(1666000000000);
+    expect(byId["test-id-2"]).toBe(1667000000000);
+    expect(byId["test-id-3"]).toBe(1668000000000);
+  });
+
   it("should return all matches if no filter is provided", async () => {
     const result = await testStore.db.listMatches();
 
@@ -168,5 +184,27 @@ describe("listMatches", () => {
     });
 
     expect(emptyResult).toHaveLength(0);
+  });
+});
+
+describe("listMatches on empty table", () => {
+  let testStore: TestPostgresStore;
+
+  beforeAll(async () => {
+    testStore = TestPostgresStore.create();
+    await testStore.beforeAll();
+  });
+
+  beforeEach(async () => {
+    await testStore.beforeEach();
+  });
+
+  afterAll(async () => {
+    await testStore.afterAll();
+  });
+
+  it("should return empty array when no matches exist", async () => {
+    const result = await testStore.db.listMatches();
+    expect(result).toEqual([]);
   });
 });

@@ -25,6 +25,17 @@ describe("connect to PostgreSQL database", () => {
     expect(tables).toHaveLength(1);
   });
 
+  it("should handle connect() being called twice", async () => {
+    // first connect() already happened in beforeAll
+    await testStore.db.connect(); // second connect
+
+    // verify schema is still intact
+    const [tables] = await testStore.sequelize.query(
+      "SELECT * FROM pg_catalog.pg_tables WHERE tablename = 'Games';"
+    );
+    expect(tables).toHaveLength(1);
+  });
+
   it("should create columns in Games table", async () => {
     const [columns] = await testStore.sequelize.query(
       `SELECT 

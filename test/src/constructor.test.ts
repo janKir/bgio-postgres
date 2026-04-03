@@ -38,9 +38,7 @@ describe("instantiate new PostgresStore", () => {
 
     expect(db).toBeDefined();
 
-    expect(async () => {
-      await db.connect();
-    }).rejects.toBeDefined();
+    await expect(db.connect()).rejects.toThrow();
 
     await db.sequelize.close();
   });
