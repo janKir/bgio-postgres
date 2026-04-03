@@ -1,4 +1,4 @@
-import { Sequelize } from "sequelize/types";
+import type { Sequelize } from "sequelize";
 import { PostgresStore } from "../src/postgres";
 
 export class TestPostgresStore {
