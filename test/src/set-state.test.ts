@@ -111,6 +111,20 @@ describe("setState", () => {
     });
   });
 
+  it("should not update state when _stateID is equal to current", async () => {
+    await Match.create(match);
+
+    const equalState: State = {
+      ...match.state,
+      ctx: { ...match.state.ctx, currentPlayer: "103", turn: 99 },
+      _stateID: 1, // same as existing
+    };
+    await testStore.db.setState(match.id!, equalState);
+
+    const result = await testStore.db.fetch(match.id!, { state: true });
+    expect(result.state).toEqual(match.state); // unchanged
+  });
+
   it("should create a new Match if none is found with given ID", async () => {
     await testStore.db.setState(match.id!, match.state);
 
