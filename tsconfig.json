@@ -61,6 +61,7 @@
   },
   "include": [
     "src/**/*",
+    "test/**/*"
   ],
   "exclude": [".git", "node_modules"]
 }
