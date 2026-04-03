@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.15] - 2022-10-19
+
+- fix failing tests caused by type changes
+- fix security issues
+
 ## [1.0.14] - 2022-10-19
 
 - add tests and CI
