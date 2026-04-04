@@ -54,5 +54,8 @@
   },
   "peerDependencies": {
     "boardgame.io": ">=0.40.0"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }

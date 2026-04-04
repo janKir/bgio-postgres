@@ -6,7 +6,7 @@ describe("listMatches", () => {
   let testStore: TestPostgresStore;
 
   beforeAll(async () => {
-    jest.useFakeTimers();
+    jest.useFakeTimers({ doNotFake: ["performance"] });
 
     testStore = TestPostgresStore.create();
     await testStore.beforeAll();
