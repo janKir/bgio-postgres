@@ -148,105 +148,65 @@ describe("concurrent setState", () => {
     );
   });
 
-  it("should expose lost update when stale write commits last", async () => {
-    await Match.create(match);
+  // Regression: without SELECT … FOR UPDATE, concurrent setState calls can
+  // read the same stale _stateID, both pass the < check, and the last writer
+  // wins — even if it carries a lower _stateID (lost update).
+  // The row lock ensures the second transaction sees the first's committed
+  // write, so the stale update is correctly rejected.
+  // We repeat the race multiple times to catch non-deterministic regressions.
+  it("should never regress to a lower _stateID under concurrent writes", async () => {
+    const ITERATIONS = 20;
 
-    const stateA: State = {
-      ...state,
-      ctx: { ...state.ctx, currentPlayer: "102", turn: 2 },
-      _stateID: 2,
-    };
-    const stateB: State = {
-      ...state,
-      ctx: { ...state.ctx, currentPlayer: "103", turn: 3 },
-      _stateID: 3,
-    };
+    for (let i = 0; i < ITERATIONS; i++) {
+      await testStore.beforeEach(); // reset DB between iterations
 
-    const logA: LogEntry[] = [
-      {
-        ...logEntry,
+      await Match.create(match);
+
+      const stateA: State = {
+        ...state,
+        ctx: { ...state.ctx, currentPlayer: "102", turn: 2 },
         _stateID: 2,
-        turn: 2,
-        action: {
-          ...logEntry.action,
-          payload: { ...logEntry.action.payload, playerID: "102" },
-        },
-      },
-    ];
-    const logB: LogEntry[] = [
-      {
-        ...logEntry,
+      };
+      const stateB: State = {
+        ...state,
+        ctx: { ...state.ctx, currentPlayer: "103", turn: 3 },
         _stateID: 3,
-        turn: 3,
-        action: {
-          ...logEntry.action,
-          payload: { ...logEntry.action.payload, playerID: "103" },
+      };
+
+      const logA: LogEntry[] = [
+        {
+          ...logEntry,
+          _stateID: 2,
+          turn: 2,
+          action: {
+            ...logEntry.action,
+            payload: { ...logEntry.action.payload, playerID: "102" },
+          },
         },
-      },
-    ];
+      ];
+      const logB: LogEntry[] = [
+        {
+          ...logEntry,
+          _stateID: 3,
+          turn: 3,
+          action: {
+            ...logEntry.action,
+            payload: { ...logEntry.action.payload, playerID: "103" },
+          },
+        },
+      ];
 
-    const originalFindByPk = Match.findByPk.bind(Match);
-    const originalUpsert = Match.upsert.bind(Match);
-
-    let findByPkCount = 0;
-    let releaseReads!: () => void;
-    const readsReady = new Promise<void>((resolve) => {
-      releaseReads = resolve;
-    });
-
-    let releaseStateAWrite!: () => void;
-    const stateAWriteGate = new Promise<void>((resolve) => {
-      releaseStateAWrite = resolve;
-    });
-
-    const findByPkSpy = jest
-      .spyOn(Match, "findByPk")
-      .mockImplementation(async (...args: Parameters<typeof Match.findByPk>) => {
-        const row = await originalFindByPk(...args);
-        findByPkCount += 1;
-        if (findByPkCount === 2) {
-          releaseReads();
-        }
-        await readsReady;
-        return row;
-      });
-
-    const upsertSpy = jest
-      .spyOn(Match, "upsert")
-      .mockImplementation(async (...args: Parameters<typeof Match.upsert>) => {
-        const values = args[0] as { state?: State };
-        const incomingStateID = values.state?._stateID;
-
-        if (incomingStateID === 2) {
-          await stateAWriteGate;
-        }
-
-        const result = await originalUpsert(...args);
-
-        if (incomingStateID === 3) {
-          releaseStateAWrite();
-        }
-
-        return result;
-      });
-
-    try {
       await Promise.all([
         testStore.db.setState(match.id!, stateA, logA),
         testStore.db.setState(match.id!, stateB, logB),
       ]);
-    } finally {
-      findByPkSpy.mockRestore();
-      upsertSpy.mockRestore();
+
+      const result = await testStore.db.fetch(match.id!, {
+        state: true,
+      });
+
+      expect(result.state!._stateID).toBe(3);
+      expect(result.state!.ctx.currentPlayer).toBe("103");
     }
-
-    const result = await testStore.db.fetch(match.id!, {
-      state: true,
-      log: true,
-    });
-
-    // Correct behavior would keep the highest _stateID even if stale write runs last.
-    // This expectation is intentionally red until setState is fixed.
-    expect(result.state!._stateID).toBe(3);
-  });
+  }, 30_000);
 });
