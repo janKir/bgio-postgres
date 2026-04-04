@@ -102,20 +102,30 @@ export class PostgresStore extends Async {
     deltalog?: LogEntry[]
   ): Promise<void> {
     await this._sequelize.transaction(async (transaction) => {
-      // 1. get previous state
+      // Lock the row to avoid lost updates when multiple setState calls race.
       const match: Match | null = await Match.findByPk(id, {
         transaction,
+        lock: transaction.LOCK.UPDATE,
       });
-      const previousState = match?.state;
-      // 2. check if given state is newer than previous, otherwise skip
-      if (!previousState || previousState._stateID < state._stateID) {
-        await Match.upsert(
+
+      if (!match) {
+        await Match.create(
           {
             id,
-            // 3. set new state
             state,
-            // 4. append deltalog to log if provided
-            log: [...(match?.log ?? []), ...(deltalog ?? [])],
+            log: deltalog ?? [],
+          },
+          { transaction }
+        );
+        return;
+      }
+
+      const previousState = match.state;
+      if (!previousState || previousState._stateID < state._stateID) {
+        await match.update(
+          {
+            state,
+            log: [...(match.log ?? []), ...(deltalog ?? [])],
           },
           { transaction }
         );

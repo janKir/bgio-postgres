@@ -147,4 +147,106 @@ describe("concurrent setState", () => {
       expect.arrayContaining([expect.objectContaining({ _stateID: 3 })])
     );
   });
+
+  it("should expose lost update when stale write commits last", async () => {
+    await Match.create(match);
+
+    const stateA: State = {
+      ...state,
+      ctx: { ...state.ctx, currentPlayer: "102", turn: 2 },
+      _stateID: 2,
+    };
+    const stateB: State = {
+      ...state,
+      ctx: { ...state.ctx, currentPlayer: "103", turn: 3 },
+      _stateID: 3,
+    };
+
+    const logA: LogEntry[] = [
+      {
+        ...logEntry,
+        _stateID: 2,
+        turn: 2,
+        action: {
+          ...logEntry.action,
+          payload: { ...logEntry.action.payload, playerID: "102" },
+        },
+      },
+    ];
+    const logB: LogEntry[] = [
+      {
+        ...logEntry,
+        _stateID: 3,
+        turn: 3,
+        action: {
+          ...logEntry.action,
+          payload: { ...logEntry.action.payload, playerID: "103" },
+        },
+      },
+    ];
+
+    const originalFindByPk = Match.findByPk.bind(Match);
+    const originalUpsert = Match.upsert.bind(Match);
+
+    let findByPkCount = 0;
+    let releaseReads!: () => void;
+    const readsReady = new Promise<void>((resolve) => {
+      releaseReads = resolve;
+    });
+
+    let releaseStateAWrite!: () => void;
+    const stateAWriteGate = new Promise<void>((resolve) => {
+      releaseStateAWrite = resolve;
+    });
+
+    const findByPkSpy = jest
+      .spyOn(Match, "findByPk")
+      .mockImplementation(async (...args: Parameters<typeof Match.findByPk>) => {
+        const row = await originalFindByPk(...args);
+        findByPkCount += 1;
+        if (findByPkCount === 2) {
+          releaseReads();
+        }
+        await readsReady;
+        return row;
+      });
+
+    const upsertSpy = jest
+      .spyOn(Match, "upsert")
+      .mockImplementation(async (...args: Parameters<typeof Match.upsert>) => {
+        const values = args[0] as { state?: State };
+        const incomingStateID = values.state?._stateID;
+
+        if (incomingStateID === 2) {
+          await stateAWriteGate;
+        }
+
+        const result = await originalUpsert(...args);
+
+        if (incomingStateID === 3) {
+          releaseStateAWrite();
+        }
+
+        return result;
+      });
+
+    try {
+      await Promise.all([
+        testStore.db.setState(match.id!, stateA, logA),
+        testStore.db.setState(match.id!, stateB, logB),
+      ]);
+    } finally {
+      findByPkSpy.mockRestore();
+      upsertSpy.mockRestore();
+    }
+
+    const result = await testStore.db.fetch(match.id!, {
+      state: true,
+      log: true,
+    });
+
+    // Correct behavior would keep the highest _stateID even if stale write runs last.
+    // This expectation is intentionally red until setState is fixed.
+    expect(result.state!._stateID).toBe(3);
+  });
 });
