@@ -1,6 +1,6 @@
 {
   "name": "bgio-postgres",
-  "version": "1.0.15",
+  "version": "1.0.16",
   "description": "Postgres storage adapter for boardgame.io library",
   "homepage": "https://github.com/janKir/bgio-postgres#readme",
   "repository": {
@@ -48,9 +48,9 @@
   },
   "dependencies": {
     "dotenv": "^16.0.3",
-    "pg": "^8.2.1",
+    "pg": "^8.20.0",
     "pg-hstore": "^2.3.3",
-    "sequelize": "^6.3.5"
+    "sequelize": "^6.37.8"
   },
   "peerDependencies": {
     "boardgame.io": ">=0.40.0"
