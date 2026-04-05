@@ -27,4 +27,8 @@ describe("wipe", () => {
     );
     expect(results).toHaveLength(0);
   });
+
+  it("should not throw when wiping a non-existent match", async () => {
+    await expect(testStore.db.wipe("nonexistent")).resolves.not.toThrow();
+  });
 });

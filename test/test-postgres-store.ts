@@ -1,4 +1,4 @@
-import { Sequelize } from "sequelize/types";
+import type { Sequelize } from "sequelize";
 import { PostgresStore } from "../src/postgres";
 
 export class TestPostgresStore {
@@ -12,6 +12,7 @@ export class TestPostgresStore {
         password: process.env.DB_PASSWORD!,
         host: process.env.DB_HOST!,
         port: Number.parseInt(process.env.DB_PORT!),
+        logging: false,
       })
     );
   }

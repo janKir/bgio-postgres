@@ -1,5 +1,6 @@
 import { Match } from "../../src/entities/match";
 import { match } from "../mock-data/match.mock";
+import { state } from "../mock-data/state.mock";
 import { TestPostgresStore } from "../test-postgres-store";
 
 describe("fetch", () => {
@@ -95,5 +96,57 @@ describe("fetch", () => {
       state: match.state,
       log: match.log,
     });
+  });
+
+  it("should handle fetch with metadata on a row created via setState (null metadata fields)", async () => {
+    // setState upsert only populates id, state, log — other columns may be null
+    await testStore.db.setState("upsert-only-id", state);
+
+    // Sequelize auto-manages createdAt/updatedAt, so this should succeed
+    const result = await testStore.db.fetch("upsert-only-id", {
+      metadata: true,
+    });
+    expect(result).toEqual({
+      metadata: {
+        gameName: null,
+        players: [],
+        setupData: null,
+        gameover: null,
+        nextMatchID: null,
+        unlisted: null,
+        createdAt: expect.any(Number),
+        updatedAt: expect.any(Number),
+      },
+    });
+  });
+
+  it("should round-trip complex JSON state through the adapter", async () => {
+    const complexState = {
+      ...state,
+      G: {
+        nested: { deep: { value: [1, 2, null, "hello"] } },
+        emptyObj: {},
+        emptyArr: [],
+        unicode: "日本語テスト 🎲",
+        largeNumber: 9007199254740991, // Number.MAX_SAFE_INTEGER
+        zero: 0,
+        booleans: [true, false],
+        nullValue: null,
+      },
+    };
+    await Match.create({
+      ...match,
+      id: "complex-json-id",
+      state: complexState,
+      initialState: complexState,
+    });
+
+    const result = await testStore.db.fetch("complex-json-id", {
+      state: true,
+      initialState: true,
+    });
+
+    expect(result.state).toEqual(complexState);
+    expect(result.initialState).toEqual(complexState);
   });
 });

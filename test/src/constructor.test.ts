@@ -3,7 +3,8 @@ import { PostgresStore } from "../../src/postgres";
 describe("instantiate new PostgresStore", () => {
   it("should create a new instance using a URI", async () => {
     const db = new PostgresStore(
-      `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_DATABASE}`
+      `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_DATABASE}`,
+      { logging: false }
     );
 
     expect(db).toBeDefined();
@@ -19,6 +20,7 @@ describe("instantiate new PostgresStore", () => {
       password: process.env.DB_PASSWORD!,
       host: process.env.DB_HOST!,
       port: Number.parseInt(process.env.DB_PORT!),
+      logging: false,
     });
 
     expect(db).toBeDefined();
@@ -34,13 +36,12 @@ describe("instantiate new PostgresStore", () => {
       password: "wrong",
       host: "notfound",
       port: 1234,
+      logging: false,
     });
 
     expect(db).toBeDefined();
 
-    expect(async () => {
-      await db.connect();
-    }).rejects.toBeDefined();
+    await expect(db.connect()).rejects.toThrow();
 
     await db.sequelize.close();
   });

@@ -46,4 +46,22 @@ describe("create new match", () => {
       updatedAt: expect.any(Date),
     });
   });
+
+  it("should throw when creating a match with a duplicate ID", async () => {
+    const opts = {
+      initialState: match.initialState!,
+      metadata: {
+        gameName: match.gameName!,
+        players: match.players!,
+        setupData: match.setupData,
+        gameover: match.gameover,
+        nextMatchID: match.nextRoomID,
+        unlisted: match.unlisted,
+        createdAt: 0,
+        updatedAt: 0,
+      },
+    };
+    await testStore.db.createMatch(match.id!, opts);
+    await expect(testStore.db.createMatch(match.id!, opts)).rejects.toThrow();
+  });
 });
